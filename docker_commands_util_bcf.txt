@@ -1,0 +1,124 @@
+## init
+docker-machine create -d virtualbox \
+  --engine-env HTTP_PROXY=http://authpcy.edf.fr:80/ \
+  --engine-env HTTPS_PROXY=https://authpcy.edf.fr:80/ \
+  --engine-env NO_PROXY="192.168.99.*" \
+  BCF
+
+ ## virtual network
+docker network create --driver bridge bcf_nw
+
+## lancement 
+docker-machine start BCF
+eval $(docker-machine env BCF)
+docker-machine ls
+
+## suppression images "none"
+docker images | grep '<none>' | awk -F ' ' '{print $3}' | xargs docker rmi
+
+## mysql
+docker stop bcf-mysql && docker rm bcf-mysqldocker ps
+docker \
+  run 
+  --detach \
+  --env MYSQL_ROOT_PASSWORD=Mdp123 \
+  --env MYSQL_USER=Admin \
+  --env MYSQL_PASSWORD=Mdp123 \
+  --env MYSQL_DATABASE=bcf \
+  --name bcf-mysql \
+  --publish 3306:3306 \
+  mysql:5.7
+
+## serveur mysql
+docker start bcf-mysql
+docker exec -it bcf-mysql bash
+
+## serveur nodejs
+http://192.168.99.101:3000
+docker start bcf-server
+
+## front
+http://192.168.99.101/
+docker start bcf-front 
+
+
+drop database bcf;
+create database bcf;
+
+mysql -u root -p
+use bcf;
+
+CREATE TABLE users (
+	id INT(6) AUTO_INCREMENT PRIMARY KEY,
+	firstname VARCHAR(30) NOT NULL,
+	lastname VARCHAR(30) NOT NULL,
+	pseudo VARCHAR(30) NOT NULL,
+	email VARCHAR(50),
+	reg_date TIMESTAMP
+)ENGINE=InnoDB;
+
+CREATE TABLE news (
+	id INT(6) AUTO_INCREMENT PRIMARY KEY,
+	user_id INT(6),
+	title VARCHAR(256) NOT NULL,
+	sub_title VARCHAR(256),
+	description VARCHAR(256) NOT NULL,
+	reg_date TIMESTAMP
+)ENGINE=InnoDB;
+
+CREATE TABLE comments (
+	id INT(6) AUTO_INCREMENT,
+	user_id INT(6) NOT NULL,
+	news_id INT(6) NOT NULL,
+	comment VARCHAR(256) NOT NULL,
+	reg_date TIMESTAMP,	
+	PRIMARY KEY (id),
+	FOREIGN KEY (user_id) REFERENCES users(id),
+	FOREIGN KEY (news_id) REFERENCES news(id)
+)ENGINE=InnoDB;
+
+CREATE TABLE replied_comment (
+	original_comment_id INT(6) AUTO_INCREMENT PRIMARY KEY,
+	replied_comment_id INT(6) NOT NULL
+)ENGINE=InnoDB;
+
+## test db
+insert into users VALUES (id, "Toto","Toto", "Toto", "Toto@mail.com", now());
+
+insert into news VALUES (id, 1, "Man must explore, and this is exploration at its greatest", "Problems look mighty small from 150 miles upProblems look mighty small from 150 miles up", "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ducimus, vero, obcaecati, aut, error quam sapiente nemo saepe quibusdam sit excepturi nam quia corporis eligendi eos magni recusandae laborum minus inventore?", now());
+
+insert into news VALUES (id, 2, "Failure is not an option", "Many say exploration is part of our destiny, but it’s actually our duty to future generations.", "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ducimus, vero, obcaecati, aut, error quam sapiente nemo saepe quibusdam sit excepturi nam quia corporis eligendi eos magni recusandae laborum minus inventore?", now());
+
+insert into news VALUES (id, 1, "Science has not yet mastered prophecy", "We predict too much for the next year and yet far too little for the next ten.", "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ducimus, vero, obcaecati, aut, error quam sapiente nemo saepe quibusdam sit excepturi nam quia corporis eligendi eos magni recusandae laborum minus inventore?", now());
+
+insert into news VALUES (id, 2, "I believe every human has a finite number of heartbeats. I don't intend to waste any of mine.", null, "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ducimus, vero, obcaecati, aut, error quam sapiente nemo saepe quibusdam sit excepturi nam quia corporis eligendi eos magni recusandae laborum minus inventore?", now());
+
+
+
+insert into comments VALUES (id, 1, 1, "Ceci est un troisieme commentaire > user 1 repond a user 2", now());
+insert into comments VALUES (id, 2, 1, " user 1 repond a user 2", now());
+
+insert into replied_comment VALUES (2, 3);
+
+
+# node stub > 
+docker rmi bcf-node-stub && docker build -t bcf-node-stub ./docker/node-stub/ && docker run -it --rm -v "//c//Users//romain.bouchaud//workspace//silver-pulse//":/usr/src/tmp bcf-node-stub bash
+
+
+## node server
+docker rmi bcf-node-server  && docker build -t bcf-node-server  ./docker/node-server/
+## 3000> acces depuis l exterieur // 3001> port https server node
+docker stop bcf_server && docker rm bcf_server && docker build -t bcf-node-server ./docker/node-server/ && docker run -it --rm -p=3000:3001 --link bcf-mysql:mysql --name bcf_server bcf-node-server
+
+
+# docker rmi sp-node-dev && docker build -t sp-node-dev ./src/app-server/ && docker run -it --rm -v "//c//Users//romain.bouchaud//workspace//silver-pulse//build//":/usr/src/tmp sp-node-dev
+
+
+## nginx font
+docker stop bcf_front && docker rm bcf_front && docker build -t bcf-nginx-front ./docker/nginx/ && docker run -d --net=bcf_nw -p=80:80 -p=443:443 --name bcf_front bcf-nginx-front 
+
+
+Pour 1 news 
+> recupere tous les commentaires oronnés
+> pour chaque commentaire récupère ts les commentaires associés
+

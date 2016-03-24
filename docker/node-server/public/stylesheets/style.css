@@ -1,0 +1,39 @@
+ body { 
+        padding-top: 60px; 
+        padding-bottom: 40px; 
+       } 
+.sidebar-nav { 
+       padding: 9px 0; 
+       } 
+.axis path,
+.axis line {
+	  fill: none;
+	  stroke: #000;
+	  shape-rendering: crispEdges;
+	}
+.x.axis path {
+	  display: none;
+	}
+.line {
+	  fill: none;
+	  stroke: steelblue;
+	  stroke-width: 1.5px;
+	}
+svg{
+	height : 100%;
+	width:100%;
+}
+.chart{
+	padding-top: 10px; 
+    padding-bottom: 10px; 
+}
+.chart rect{
+	fill : steelblue; 
+}
+.arc text {
+  font: 10px sans-serif;
+  text-anchor: middle;
+}
+.arc path {
+  stroke: #fff;
+}
